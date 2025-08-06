@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+
+{% block title %}Blockchain Interface - Quantum DSI Platform{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card blockchain-card">
+                <div class="card-body text-center py-4">
+                    <h2 class="card-title mb-3">
+                        <i class="fas fa-link me-3"></i>
+                        Blockchain Governance Interface
+                    </h2>
+                    <p class="card-text">
+                        Manage stakeholders, submit proposals, and participate in IPLC-controlled decision making
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="blockchainTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="stakeholders-tab" data-bs-toggle="tab" 
+                    data-bs-target="#stakeholders" type="button" role="tab">
+                <i class="fas fa-users me-2"></i>Stakeholders
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="proposals-tab" data-bs-toggle="tab" 
+                    data-bs-target="#proposals" type="button" role="tab">
+                <i class="fas fa-gavel me-2"></i>Proposals
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="voting-tab" data-bs-toggle="tab" 
+                    data-bs-target="#voting" type="button" role="tab">
+                <i class="fas fa-vote-yea me-2"></i>Voting
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" 
+                    data-bs-target="#transactions" type="button" role="tab">
+                <i class="fas fa-history me-2"></i>Transaction History
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="blockchainTabContent">
+        <!-- Stakeholders Tab -->
+        <div class="tab-pane fade show active" id="stakeholders" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2"></i>Registered Stakeholders
+                            </h5>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStakeholderModal">
+                                <i class="fas fa-plus me-1"></i>Add Stakeholder
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="stakeholdersTable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Organization</th>
+                                            <th>Voting Weight</th>
+                                            <th>IPLC</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stakeholder in stakeholders %}
+                                        <tr>
+                                            <td><strong>{{ stakeholder.name }}</strong></td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ stakeholder.type }}</span>
+                                            </td>
+                                            <td>{{ stakeholder.organization or '-' }}</td>
+                                            <td>{{ "%.2f"|format(stakeholder.voting_weight) }}</td>
+                                            <td>
+                                                {% if stakeholder.is_iplc %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-check me-1"></i>IPLC
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-info" 
+                                                        onclick="viewStakeholder('{{ stakeholder.id }}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Stakeholder Distribution
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="stakeholderChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposals Tab -->
+        <div class="tab-pane fade" id="proposals" role="tabpanel">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-gavel me-2"></i>Governance Proposals
+                            </h5>
+                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#submitProposalModal">
+                                <i class="fas fa-plus me-1"></i>Submit Proposal
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="proposalsGrid">
+                                {% for proposal in proposals %}
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card border-start border-primary border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title">{{ proposal.title }}</h6>
+                                                <span class="badge bg-{{ 'success' if proposal.status == 'approved' else 'warning' if proposal.status == 'active' else 'secondary' }}">
+                                                    {{ proposal.status.title() }}
+                                                </span>
+                                            </div>
+                                            <p class="card-text text-muted small">{{ proposal.description[:100] }}...</p>
+                                            <div class="row text-center mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted">Type</small>
+                                                    <div class="fw-bold">{{ proposal.type }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Votes</small>
+                                                    <div class="fw-bold">{{ proposal.vote_counts.total_votes }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Approval</small>
+                                                    <div class="fw-bold">{{ proposal.vote_counts.approve }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-primary btn-sm flex-fill" 
+                                                        onclick="viewProposal('{{ proposal.id }}')">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </button>
+                                                {% if proposal.status == 'active' %}
+                                                <button class="btn btn-outline-success btn-sm flex-fill" 
+                                                        onclick="showVoteModal('{{ proposal.id }}')">
+                                                    <i class="fas fa-vote-yea me-1"></i>Vote
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voting Tab -->
+        <div class="tab-pane fade" id="voting" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-vote-yea me-2"></i>Active Voting Sessions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="activeVoting">
+                                <!-- Active voting sessions will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-shield-alt me-2"></i>IPLC Consensus Status
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="iplcConsensus">
+                                <!-- IPLC consensus status will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History Tab -->
+        <div class="tab-pane fade" id="transactions" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>Blockchain Transaction History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="transactionTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Type</th>
+                                    <th>Initiator</th>
+                                    <th>Details</th>
+                                    <th>Status</th>
+                                    <th>Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Transaction history will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stakeholder Modal -->
+<div class="modal fade" id="addStakeholderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Register New Stakeholder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addStakeholderForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="stakeholderName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="stakeholderType" required>
+                            <option value="">Select type...</option>
+                            <option value="iplc_representative">IPLC Representative</option>
+                            <option value="researcher">Researcher</option>
+                            <option value="industry">Industry Partner</option>
+                            <option value="cali_fund_administrator">Cali Fund Administrator</option>
+                            <option value="government_representative">Government Representative</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organization</label>
+                        <input type="text" class="form-control" id="stakeholderOrganization">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Voting Weight</label>
+                        <input type="number" class="form-control" id="stakeholderWeight" 
+                               min="0.1" max="5.0" step="0.1" value="1.0">
+                        <small class="form-text text-muted">Default: 1.0, IPLC representatives typically get higher weights</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isIplc">
+                            <label class="form-check-label" for="isIplc">
+                                Indigenous Peoples and Local Communities (IPLC) Representative
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Register Stakeholder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Proposal Modal -->
+<div class="modal fade" id="submitProposalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-gavel me-2"></i>Submit Governance Proposal
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="submitProposalForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Proposer ID <span class="text-danger">*</span></label>
+                        <select class="form-select" id="proposerSelect" required>
+                            <option value="">Select proposer...</option>
+                            {% for stakeholder in stakeholders %}
+                            <option value="{{ stakeholder.id }}">{{ stakeholder.name }} ({{ stakeholder.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Proposal Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="proposalType" required>
+                            <option value="">Select type...</option>
+                            <option value="BENEFIT_SHARING_APPROVAL">Benefit Sharing Approval</option>
+                            <option value="ACCESS_REQUEST">Access Request</option>
+                            <option value="GOVERNANCE_CHANGE">Governance Change</option>
+                            <option value="DISPUTE_RESOLUTION">Dispute Resolution</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="proposalTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="proposalDescription" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Related DSI Asset IDs</label>
+                        <input type="text" class="form-control" id="dsiAssetIds" 
+                               placeholder="Enter comma-separated DSI asset IDs">
+                        <small class="form-text text-muted">Optional: Specify DSI assets related to this proposal</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Proposed Terms (JSON)</label>
+                        <textarea class="form-control" id="proposedTerms" rows="3" 
+                                  placeholder='{"revenue_share": 0.02, "duration_years": 5}'></textarea>
+                        <small class="form-text text-muted">Optional: JSON object with proposal-specific terms</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i>Submit Proposal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Vote Modal -->
+<div class="modal fade" id="voteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-vote-yea me-2"></i>Cast Your Vote
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="voteForm">
+                <div class="modal-body">
+                    <div id="voteProposalDetails">
+                        <!-- Proposal details will be populated here -->
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Voter ID <span class="text-danger">*</span></label>
+                        <select class="form-select" id="voterSelect" required>
+                            <option value="">Select your identity...</option>
+                            {% for stakeholder in stakeholders %}
+                            <option value="{{ stakeholder.id }}">{{ stakeholder.name }} ({{ stakeholder.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vote <span class="text-danger">*</span></label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="voteChoice" id="voteApprove" value="APPROVE">
+                            <label class="btn btn-outline-success" for="voteApprove">
+                                <i class="fas fa-thumbs-up me-1"></i>Approve
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="voteChoice" id="voteReject" value="REJECT">
+                            <label class="btn btn-outline-danger" for="voteReject">
+                                <i class="fas fa-thumbs-down me-1"></i>Reject
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="voteChoice" id="voteAbstain" value="ABSTAIN">
+                            <label class="btn btn-outline-secondary" for="voteAbstain">
+                                <i class="fas fa-minus me-1"></i>Abstain
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Justification</label>
+                        <textarea class="form-control" id="voteJustification" rows="3" 
+                                  placeholder="Optional: Explain your vote"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check me-1"></i>Cast Vote
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let stakeholderChart = null;
+    let currentProposalId = null;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        createStakeholderChart();
+        loadActiveVoting();
+        loadTransactionHistory();
+    });
+
+    // Stakeholder Management
+    document.getElementById('addStakeholderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await registerStakeholder();
+    });
+
+    async function registerStakeholder() {
+        const formData = {
+            name: document.getElementById('stakeholderName').value,
+            type: document.getElementById('stakeholderType').value,
+            organization: document.getElementById('stakeholderOrganization').value,
+            voting_weight: parseFloat(document.getElementById('stakeholderWeight').value),
+            is_iplc: document.getElementById('isIplc').checked
+        };
+
+        try {
+            const response = await fetch('/api/stakeholders/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('Stakeholder registered successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addStakeholderModal')).hide();
+                location.reload(); // Refresh to show new stakeholder
+            } else {
+                showAlert('Failed to register stakeholder: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Error registering stakeholder: ' + error.message, 'danger');
+        }
+    }
+
+    // Proposal Management
+    document.getElementById('submitProposalForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await submitProposal();
+    });
+
+    async function submitProposal() {
+        let proposedTerms = {};
+        try {
+            const termsText = document.getElementById('proposedTerms').value.trim();
+            if (termsText) {
+                proposedTerms = JSON.parse(termsText);
+            }
+        } catch (e) {
+            showAlert('Invalid JSON in proposed terms', 'danger');
+            return;
+        }
+
+        const dsiIds = document.getElementById('dsiAssetIds').value
+            .split(',').map(id => id.trim()).filter(id => id);
+
+        const formData = {
+            proposer_id: document.getElementById('proposerSelect').value,
+            proposal_type: document.getElementById('proposalType').value,
+            title: document.getElementById('proposalTitle').value,
+            description: document.getElementById('proposalDescription').value,
+            dsi_asset_ids: dsiIds,
+            proposed_terms: proposedTerms
+        };
+
+        try {
+            const response = await fetch('/api/proposals/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('Proposal submitted successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('submitProposalModal')).hide();
+                location.reload(); // Refresh to show new proposal
+            } else {
+                showAlert('Failed to submit proposal: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Error submitting proposal: ' + error.message, 'danger');
+        }
+    }
+
+    // Voting
+    document.getElementById('voteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await castVote();
+    });
+
+    function showVoteModal(proposalId) {
+        currentProposalId = proposalId;
+        const modal = new bootstrap.Modal(document.getElementById('voteModal'));
+        
+        // Load proposal details
+        loadProposalForVoting(proposalId);
+        modal.show();
+    }
+
+    async function loadProposalForVoting(proposalId) {
+        try {
+            const response = await fetch('/api/proposals');
+            const data = await response.json();
+            
+            if (data.success) {
+                const proposal = data.proposals.find(p => p.id === proposalId);
+                if (proposal) {
+                    const detailsHtml = `
+                        <div class="alert alert-info">
+                            <h6>${proposal.title}</h6>
+                            <p class="mb-0">${proposal.description}</p>
+                            <small class="text-muted">Type: ${proposal.type} | Proposer: ${proposal.proposer_id}</small>
+                        </div>
+                    `;
+                    document.getElementById('voteProposalDetails').innerHTML = detailsHtml;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading proposal details:', error);
+        }
+    }
+
+    async function castVote() {
+        const voteChoice = document.querySelector('input[name="voteChoice"]:checked');
+        if (!voteChoice) {
+            showAlert('Please select a vote choice', 'warning');
+            return;
+        }
+
+        const formData = {
+            voter_id: document.getElementById('voterSelect').value,
+            vote: voteChoice.value,
+            justification: document.getElementById('voteJustification').value
+        };
+
+        try {
+            const response = await fetch(`/api/proposals/${currentProposalId}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('Vote cast successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('voteModal')).hide();
+                loadActiveVoting(); // Refresh voting display
+            } else {
+                showAlert('Failed to cast vote: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Error casting vote: ' + error.message, 'danger');
+        }
+    }
+
+    // Utility Functions
+    function viewStakeholder(stakeholderId) {
+        showAlert(`Viewing stakeholder details for ID: ${stakeholderId}`, 'info');
+    }
+
+    function viewProposal(proposalId) {
+        showAlert(`Viewing proposal details for ID: ${proposalId}`, 'info');
+    }
+
+    function createStakeholderChart() {
+        const ctx = document.getElementById('stakeholderChart').getContext('2d');
+        
+        // Count stakeholder types
+        const stakeholderData = {};
+        document.querySelectorAll('#stakeholdersTable tbody tr').forEach(row => {
+            const type = row.querySelector('td:nth-child(2) .badge').textContent.trim();
+            stakeholderData[type] = (stakeholderData[type] || 0) + 1;
+        });
+
+        const labels = Object.keys(stakeholderData);
+        const data = Object.values(stakeholderData);
+        const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'];
+
+        stakeholderChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadActiveVoting() {
+        try {
+            const response = await fetch('/api/proposals');
+            const data = await response.json();
+            
+            if (data.success) {
+                const activeProposals = data.proposals.filter(p => p.status === 'active');
+                let html = '';
+                
+                if (activeProposals.length === 0) {
+                    html = '<div class="text-center text-muted py-4">No active voting sessions</div>';
+                } else {
+                    activeProposals.forEach(proposal => {
+                        const approvalRate = proposal.vote_counts.total_votes > 0 ? 
+                            (proposal.vote_counts.approve / proposal.vote_counts.total_votes * 100).toFixed(1) : 0;
+                        
+                        html += `
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6>${proposal.title}</h6>
+                                    <span class="badge bg-primary">${proposal.type}</span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" style="width: ${approvalRate}%"></div>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <small class="text-muted">Total Votes</small>
+                                        <div class="fw-bold">${proposal.vote_counts.total_votes}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">Approve</small>
+                                        <div class="fw-bold text-success">${proposal.vote_counts.approve}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">Approval Rate</small>
+                                        <div class="fw-bold">${approvalRate}%</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="showVoteModal('${proposal.id}')">
+                                        <i class="fas fa-vote-yea me-1"></i>Vote Now
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                document.getElementById('activeVoting').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading active voting:', error);
+        }
+    }
+
+    function loadTransactionHistory() {
+        // Mock transaction history for demonstration
+        const transactions = [
+            {
+                timestamp: '2024-01-15 14:30:00',
+                type: 'Stakeholder Registration',
+                initiator: 'System Admin',
+                details: 'Registered IPLC Representative',
+                status: 'Confirmed',
+                hash: '0x1234...abcd'
+            },
+            {
+                timestamp: '2024-01-15 15:45:00',
+                type: 'Proposal Submission',
+                initiator: 'pharma_corp',
+                details: 'COVID-19 Vaccine Benefit Sharing',
+                status: 'Confirmed',
+                hash: '0x5678...efgh'
+            }
+        ];
+
+        let html = '';
+        transactions.forEach(tx => {
+            html += `
+                <tr>
+                    <td>${tx.timestamp}</td>
+                    <td><span class="badge bg-info">${tx.type}</span></td>
+                    <td>${tx.initiator}</td>
+                    <td>${tx.details}</td>
+                    <td><span class="badge bg-success">${tx.status}</span></td>
+                    <td><code class="small">${tx.hash}</code></td>
+                </tr>
+            `;
+        });
+
+        document.querySelector('#transactionTable tbody').innerHTML = html;
+    }
+</script>
+{% endblock %}

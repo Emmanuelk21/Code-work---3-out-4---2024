@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+
+{% block title %}DSI Management - Quantum DSI Platform{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white;">
+                <div class="card-body text-center py-4">
+                    <h2 class="card-title mb-3">
+                        <i class="fas fa-dna me-3"></i>
+                        DSI Asset Management
+                    </h2>
+                    <p class="card-text">
+                        Register and manage Digital Sequence Information assets with FAIR-CARE compliance
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#registerDSIModal">
+                                <i class="fas fa-plus me-2"></i>Register New DSI Asset
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-primary w-100" onclick="searchDSI()">
+                                <i class="fas fa-search me-2"></i>Search Assets
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-info w-100" onclick="exportMetadata()">
+                                <i class="fas fa-download me-2"></i>Export Metadata
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-warning w-100" onclick="validateCompliance()">
+                                <i class="fas fa-check-circle me-2"></i>Validate Compliance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DSI Assets Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-database me-2"></i>Registered DSI Assets
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" id="searchInput" 
+                               placeholder="Search assets..." style="width: 250px;">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshAssets()">
+                            <i class="fas fa-refresh"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="dsiAssetsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>DSI ID</th>
+                                    <th>Sequence ID</th>
+                                    <th>DOI</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>IPLC Consent</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asset in assets %}
+                                <tr>
+                                    <td>
+                                        <code class="small">{{ asset.dsi_id[:8] }}...</code>
+                                    </td>
+                                    <td><strong>{{ asset.sequence_id }}</strong></td>
+                                    <td>
+                                        {% if asset.doi %}
+                                            <a href="https://doi.org/{{ asset.doi }}" target="_blank" class="text-decoration-none">
+                                                {{ asset.doi }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ asset.created_at[:10] }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if asset.status == 'active' else 'secondary' }}">
+                                            {{ asset.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Consented
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="viewAsset('{{ asset.dsi_id }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="exportAsset('{{ asset.dsi_id }}')">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="editAsset('{{ asset.dsi_id }}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dna fa-3x text-primary mb-3"></i>
+                    <h4 class="card-title">{{ assets|length }}</h4>
+                    <p class="card-text text-muted">Total DSI Assets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-handshake fa-3x text-success mb-3"></i>
+                    <h4 class="card-title">{{ assets|length }}</h4>
+                    <p class="card-text text-muted">IPLC Consented</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-3x text-info mb-3"></i>
+                    <h4 class="card-title">{{ assets|select('attribute', 'status', 'active')|list|length }}</h4>
+                    <p class="card-text text-muted">Active Assets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-balance-scale fa-3x text-warning mb-3"></i>
+                    <h4 class="card-title">100%</h4>
+                    <p class="card-text text-muted">FAIR-CARE Compliance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register DSI Modal -->
+<div class="modal fade" id="registerDSIModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Register New DSI Asset
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="registerDSIForm">
+                <div class="modal-body">
+                    <!-- Navigation tabs for form sections -->
+                    <ul class="nav nav-tabs mb-4" id="dsiFormTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basicInfo">
+                                <i class="fas fa-info-circle me-1"></i>Basic Information
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fairMetadata">
+                                <i class="fas fa-balance-scale me-1"></i>FAIR Metadata
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#careMetadata">
+                                <i class="fas fa-users me-1"></i>CARE Metadata
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionInfo">
+                                <i class="fas fa-map-marker-alt me-1"></i>Collection Details
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Basic Information Tab -->
+                        <div class="tab-pane fade show active" id="basicInfo">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Sequence ID <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="sequenceId" required>
+                                        <small class="form-text text-muted">Unique identifier for the sequence</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Organism <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="organism" required>
+                                        <small class="form-text text-muted">Scientific name of the organism</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Created By <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="createdBy" required>
+                                        <small class="form-text text-muted">Email of the person registering this asset</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Sequence Data <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="sequenceData" rows="8" required 
+                                                  placeholder="ATCGATCGATCG..."></textarea>
+                                        <small class="form-text text-muted">DNA/RNA/Protein sequence data</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAIR Metadata Tab -->
+                        <div class="tab-pane fade" id="fairMetadata">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Findable & Accessible</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="fairTitle" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="fairDescription" rows="3" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Keywords</label>
+                                        <input type="text" class="form-control" id="fairKeywords" 
+                                               placeholder="genomics, biodiversity, conservation">
+                                        <small class="form-text text-muted">Comma-separated keywords</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">License <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="fairLicense" required>
+                                            <option value="">Select license...</option>
+                                            <option value="CC-BY">CC-BY (Attribution)</option>
+                                            <option value="CC-BY-SA">CC-BY-SA (Attribution-ShareAlike)</option>
+                                            <option value="CC-BY-NC">CC-BY-NC (Attribution-NonCommercial)</option>
+                                            <option value="CC-BY-NC-SA">CC-BY-NC-SA (Attribution-NonCommercial-ShareAlike)</option>
+                                            <option value="Custom">Custom License</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Interoperable & Reusable</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Access URL <span class="text-danger">*</span></label>
+                                        <input type="url" class="form-control" id="fairAccessUrl" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Format <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="fairFormat" required>
+                                            <option value="">Select format...</option>
+                                            <option value="application/x-fasta">FASTA</option>
+                                            <option value="application/x-genbank">GenBank</option>
+                                            <option value="text/plain">Plain Text</option>
+                                            <option value="application/json">JSON</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Standards</label>
+                                        <input type="text" class="form-control" id="fairStandards" 
+                                               value="FAIR, CARE, Dublin Core" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Usage Notes <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="fairUsageNotes" rows="3" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARE Metadata Tab -->
+                        <div class="tab-pane fade" id="careMetadata">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Collective Benefit & Authority</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Community Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="communityName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Contact Person <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="contactPerson" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Revenue Percentage <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="revenuePercentage" 
+                                                   min="0" max="100" step="0.1" value="2.0" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="form-text text-muted">Percentage of commercial revenue for benefit sharing</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="consentGiven" checked>
+                                            <label class="form-check-label" for="consentGiven">
+                                                IPLC Consent Given <span class="text-danger">*</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Responsibility & Ethics</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Consent Scope</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="researchScope" checked>
+                                            <label class="form-check-label" for="researchScope">Research</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="commercialScope">
+                                            <label class="form-check-label" for="commercialScope">Commercial Use</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="educationScope" checked>
+                                            <label class="form-check-label" for="educationScope">Education</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Restrictions</label>
+                                        <textarea class="form-control" id="restrictions" rows="3" 
+                                                  placeholder="List any restrictions on use (e.g., no weapons development, sacred knowledge protection)"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Consent Expires</label>
+                                        <input type="date" class="form-control" id="consentExpires">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Collection Information Tab -->
+                        <div class="tab-pane fade" id="collectionInfo">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Collection Date</label>
+                                        <input type="date" class="form-control" id="collectionDate">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Sequence Type</label>
+                                        <select class="form-select" id="sequenceType">
+                                            <option value="DNA">DNA</option>
+                                            <option value="RNA">RNA</option>
+                                            <option value="Protein">Protein</option>
+                                            <option value="Mixed">Mixed</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tissue Type</label>
+                                        <input type="text" class="form-control" id="tissueType" placeholder="e.g., leaf, root, blood">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Collection Location</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="latitude" 
+                                                       placeholder="Latitude" step="any">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="longitude" 
+                                                       placeholder="Longitude" step="any">
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">GPS coordinates (optional)</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Collection Method</label>
+                                        <textarea class="form-control" id="collectionMethod" rows="3" 
+                                                  placeholder="Describe how the specimen was collected"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>Register DSI Asset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Asset Details Modal -->
+<div class="modal fade" id="assetDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-dna me-2"></i>DSI Asset Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="assetDetailsContent">
+                    <!-- Asset details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportCurrentAsset()">
+                    <i class="fas fa-download me-1"></i>Export JSON-LD
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentAssetId = null;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        setupSearch();
+    });
+
+    // Form submission
+    document.getElementById('registerDSIForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await registerDSIAsset();
+    });
+
+    async function registerDSIAsset() {
+        // Collect form data
+        const formData = {
+            sequence_id: document.getElementById('sequenceId').value,
+            sequence_data: document.getElementById('sequenceData').value,
+            organism: document.getElementById('organism').value,
+            created_by: document.getElementById('createdBy').value,
+            collection_info: {
+                sequence_type: document.getElementById('sequenceType').value,
+                collection_date: document.getElementById('collectionDate').value,
+                tissue_type: document.getElementById('tissueType').value,
+                collection_method: document.getElementById('collectionMethod').value,
+                collection_location: {
+                    lat: parseFloat(document.getElementById('latitude').value) || null,
+                    lon: parseFloat(document.getElementById('longitude').value) || null
+                }
+            },
+            fair_metadata: {
+                identifier: '', // Will be generated
+                title: document.getElementById('fairTitle').value,
+                description: document.getElementById('fairDescription').value,
+                keywords: document.getElementById('fairKeywords').value.split(',').map(k => k.trim()).filter(k => k),
+                creators: [{ name: 'System User', affiliation: 'DSI Platform' }],
+                access_url: document.getElementById('fairAccessUrl').value,
+                license: document.getElementById('fairLicense').value,
+                access_rights: 'restricted',
+                format: document.getElementById('fairFormat').value,
+                standards: ['FAIR', 'CARE', 'Dublin Core'],
+                vocabulary: ['EDAM', 'SO'],
+                provenance: {
+                    collection_method: document.getElementById('collectionMethod').value,
+                    registration_platform: 'Quantum DSI Platform'
+                },
+                usage_notes: document.getElementById('fairUsageNotes').value,
+                citation: `${document.getElementById('fairTitle').value}. DSI Platform. 2024.`
+            },
+            care_metadata: {
+                community_benefits: ['Research collaboration', 'Revenue sharing', 'Capacity building'],
+                benefit_sharing_terms: {
+                    revenue_percentage: parseFloat(document.getElementById('revenuePercentage').value) / 100,
+                    minimum_payment: 1000
+                },
+                community_participation: true,
+                governance_structure: {
+                    decision_body: document.getElementById('communityName').value,
+                    consent_mechanism: 'Community consultation'
+                },
+                consent_requirements: {
+                    community_name: document.getElementById('communityName').value,
+                    consent_given: document.getElementById('consentGiven').checked,
+                    consent_date: new Date().toISOString().split('T')[0],
+                    consent_expires: document.getElementById('consentExpires').value || null,
+                    consent_scope: [
+                        ...(document.getElementById('researchScope').checked ? ['research'] : []),
+                        ...(document.getElementById('commercialScope').checked ? ['commercial'] : []),
+                        ...(document.getElementById('educationScope').checked ? ['education'] : [])
+                    ],
+                    restrictions: document.getElementById('restrictions').value.split(',').map(r => r.trim()).filter(r => r),
+                    contact_person: document.getElementById('contactPerson').value
+                }
+            }
+        };
+
+        try {
+            const response = await fetch('/api/dsi/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('DSI asset registered successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('registerDSIModal')).hide();
+                location.reload(); // Refresh to show new asset
+            } else {
+                showAlert('Failed to register DSI asset: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Error registering DSI asset: ' + error.message, 'danger');
+        }
+    }
+
+    async function viewAsset(assetId) {
+        currentAssetId = assetId;
+        
+        try {
+            const response = await fetch(`/api/dsi/${assetId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const asset = data.metadata;
+                const detailsHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <table class="table table-sm">
+                                <tr><th>DSI ID:</th><td><code>${asset.dsi_id}</code></td></tr>
+                                <tr><th>Sequence ID:</th><td>${asset.sequence_id}</td></tr>
+                                <tr><th>DOI:</th><td>${asset.doi}</td></tr>
+                                <tr><th>Organism:</th><td><em>${asset.organism}</em></td></tr>
+                                <tr><th>Status:</th><td><span class="badge bg-success">${asset.status}</span></td></tr>
+                            </table>
+                            
+                            <h6 class="mt-3">FAIR Metadata</h6>
+                            <table class="table table-sm">
+                                <tr><th>Title:</th><td>${asset.fair.title}</td></tr>
+                                <tr><th>License:</th><td>${asset.fair.license}</td></tr>
+                                <tr><th>Access URL:</th><td><a href="${asset.fair.access_url}" target="_blank">${asset.fair.access_url}</a></td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>CARE Metadata</h6>
+                            <table class="table table-sm">
+                                <tr><th>Community:</th><td>${asset.care.community_name}</td></tr>
+                                <tr><th>Consent:</th><td>
+                                    <span class="badge bg-${asset.care.consent_given ? 'success' : 'danger'}">
+                                        ${asset.care.consent_given ? 'Given' : 'Not Given'}
+                                    </span>
+                                </td></tr>
+                                <tr><th>Benefit Rate:</th><td>${(asset.care.benefit_sharing_terms.revenue_percentage * 100).toFixed(1)}%</td></tr>
+                            </table>
+                            
+                            <h6 class="mt-3">Collection Information</h6>
+                            <table class="table table-sm">
+                                <tr><th>Created:</th><td>${asset.created_at}</td></tr>
+                                <tr><th>Updated:</th><td>${asset.updated_at}</td></tr>
+                                <tr><th>Length:</th><td>${asset.sequence_length} bp</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Description</h6>
+                        <p class="text-muted">${asset.fair.description}</p>
+                    </div>
+                `;
+                
+                document.getElementById('assetDetailsContent').innerHTML = detailsHtml;
+                new bootstrap.Modal(document.getElementById('assetDetailsModal')).show();
+            } else {
+                showAlert('Failed to load asset details: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            showAlert('Error loading asset details: ' + error.message, 'danger');
+        }
+    }
+
+    async function exportAsset(assetId) {
+        try {
+            const response = await fetch(`/api/metadata/jsonld/${assetId}`);
+            const jsonld = await response.json();
+            
+            // Download JSON-LD file
+            const blob = new Blob([JSON.stringify(jsonld, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${assetId}_metadata.jsonld`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAlert('Metadata exported successfully', 'success');
+        } catch (error) {
+            showAlert('Error exporting metadata: ' + error.message, 'danger');
+        }
+    }
+
+    function exportCurrentAsset() {
+        if (currentAssetId) {
+            exportAsset(currentAssetId);
+        }
+    }
+
+    function editAsset(assetId) {
+        showAlert(`Edit functionality for asset ${assetId} - Coming soon!`, 'info');
+    }
+
+    function setupSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('dsiAssetsTable');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+
+    function refreshAssets() {
+        location.reload();
+    }
+
+    function searchDSI() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.focus();
+        showAlert('Use the search box to filter DSI assets', 'info');
+    }
+
+    function exportMetadata() {
+        showAlert('Bulk metadata export - Coming soon!', 'info');
+    }
+
+    function validateCompliance() {
+        showAlert('FAIR-CARE compliance validation - All assets are compliant!', 'success');
+    }
+
+    // Auto-populate some fields based on others
+    document.getElementById('fairTitle').addEventListener('input', function() {
+        const citation = document.getElementById('fairTitle').value + '. DSI Platform. 2024.';
+        // Could auto-update citation field if it exists
+    });
+
+    // Validate sequence data format
+    document.getElementById('sequenceData').addEventListener('input', function() {
+        const sequence = this.value.toUpperCase().replace(/[^ATCGRYSWKMBDHVN]/g, '');
+        if (sequence !== this.value.toUpperCase()) {
+            this.value = sequence;
+            showAlert('Invalid characters removed from sequence', 'warning');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}Comparative Analysis - Quantum DSI Platform{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card quantum-card">
+                <div class="card-body text-center py-4">
+                    <h2 class="card-title mb-3">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Classical vs Quantum Attribution Analysis
+                    </h2>
+                    <p class="card-text">
+                        Compare traditional attribution methods with quantum-enhanced algorithms for DSI benefit allocation
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Analysis Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="analysisForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Innovation Context</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Innovation Type</label>
+                                    <select class="form-select" id="innovationType">
+                                        <option value="pharmaceutical">Pharmaceutical</option>
+                                        <option value="diagnostic">Diagnostic</option>
+                                        <option value="agricultural">Agricultural</option>
+                                        <option value="research">Research</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Application</label>
+                                    <input type="text" class="form-control" id="application" 
+                                           value="COVID-19 treatment development">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Commercial Value ($)</label>
+                                    <input type="number" class="form-control" id="commercialValue" 
+                                           value="100000000" min="1000000" step="1000000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Dataset Selection</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Datasets to Analyze</label>
+                                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dataset1" checked>
+                                            <label class="form-check-label" for="dataset1">
+                                                SARS-CoV-2 Reference Genome
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dataset2" checked>
+                                            <label class="form-check-label" for="dataset2">
+                                                Traditional Medicinal Plants Database
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dataset3" checked>
+                                            <label class="form-check-label" for="dataset3">
+                                                Human ACE2 Receptor Sequences
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dataset4" checked>
+                                            <label class="form-check-label" for="dataset4">
+                                                Viral Variants Database
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="dataset5" checked>
+                                            <label class="form-check-label" for="dataset5">
+                                                Indigenous Knowledge Repository
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-quantum btn-lg" id="runAnalysisBtn">
+                                <i class="fas fa-play me-2"></i>Run Comparative Analysis
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" style="display: none;">
+        <!-- Method Comparison Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="comparison-table">
+                    <div class="row g-0">
+                        <div class="col-3 uniform-header method-header">
+                            <i class="fas fa-equals me-2"></i>Uniform Distribution
+                        </div>
+                        <div class="col-3 rules-header method-header">
+                            <i class="fas fa-brain me-2"></i>Rule-Based Expert
+                        </div>
+                        <div class="col-3 citation-header method-header">
+                            <i class="fas fa-book me-2"></i>Citation-Based
+                        </div>
+                        <div class="col-3 quantum-header method-header">
+                            <i class="fas fa-atom me-2"></i>Quantum-Enhanced
+                        </div>
+                    </div>
+                    <div class="row g-0" id="methodComparison">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attribution Weights Chart -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Attribution Weights Comparison
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="attributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Method Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="methodAnalysis">
+                            <!-- Method analysis will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IPLC Impact Analysis -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>IPLC Communities Impact
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="iplcChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-dollar-sign me-2"></i>Benefit Allocation Comparison
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="benefitAllocation">
+                            <!-- Benefit allocation details will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Dataset Analysis -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>Detailed Dataset Attribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="detailedTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Dataset</th>
+                                        <th>Uniform</th>
+                                        <th>Rule-Based</th>
+                                        <th>Citation</th>
+                                        <th>Quantum</th>
+                                        <th>Quantum Advantage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Table rows will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Key Insights & Recommendations
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="keyInsights">
+                            <!-- Key insights will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let attributionChart = null;
+    let iplcChart = null;
+
+    document.getElementById('analysisForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        runComparativeAnalysis();
+    });
+
+    async function runComparativeAnalysis() {
+        const btn = document.getElementById('runAnalysisBtn');
+        const originalText = btn.innerHTML;
+        showLoading(btn);
+
+        try {
+            // Collect form data
+            const datasets = [];
+            const checkboxes = ['dataset1', 'dataset2', 'dataset3', 'dataset4', 'dataset5'];
+            const datasetNames = [
+                'SARS-CoV-2_Reference_Genome',
+                'Traditional_Medicinal_Plants',
+                'Human_ACE2_Receptor',
+                'Viral_Variants_Database',
+                'Indigenous_Knowledge'
+            ];
+
+            checkboxes.forEach((id, index) => {
+                if (document.getElementById(id).checked) {
+                    datasets.push(datasetNames[index]);
+                }
+            });
+
+            const innovationContext = {
+                type: document.getElementById('innovationType').value,
+                application: document.getElementById('application').value,
+                commercial_value: parseInt(document.getElementById('commercialValue').value),
+                complexity: 'high'
+            };
+
+            // Call API
+            const response = await fetch('/api/comparative-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    datasets: datasets,
+                    innovation_context: innovationContext
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                displayResults(data);
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showAlert('Analysis failed: ' + data.error, 'danger');
+            }
+
+        } catch (error) {
+            showAlert('Error running analysis: ' + error.message, 'danger');
+        } finally {
+            hideLoading(btn, originalText);
+        }
+    }
+
+    function displayResults(data) {
+        const { attribution_weights, benefit_allocations, iplc_analysis, scenario } = data;
+
+        // Display method comparison
+        displayMethodComparison(attribution_weights, benefit_allocations, scenario);
+
+        // Create attribution chart
+        createAttributionChart(attribution_weights, scenario.datasets);
+
+        // Create IPLC impact chart
+        createIplcChart(iplc_analysis);
+
+        // Display benefit allocation details
+        displayBenefitAllocation(benefit_allocations, iplc_analysis, scenario);
+
+        // Create detailed table
+        createDetailedTable(attribution_weights, benefit_allocations, scenario);
+
+        // Display key insights
+        displayKeyInsights(attribution_weights, iplc_analysis, scenario);
+    }
+
+    function displayMethodComparison(weights, allocations, scenario) {
+        const container = document.getElementById('methodComparison');
+        const methods = ['uniform', 'rule_based', 'citation_based', 'quantum'];
+        const methodNames = ['Uniform', 'Rule-Based', 'Citation', 'Quantum'];
+        const colors = ['#95a5a6', '#3498db', '#e74c3c', 'var(--quantum-gradient)'];
+
+        let html = '';
+        methods.forEach((method, index) => {
+            const totalBenefit = Object.values(allocations[method]).reduce((sum, val) => sum + val, 0);
+            const iplcBenefit = Object.entries(allocations[method])
+                .filter(([dataset]) => dataset.toLowerCase().includes('traditional') || 
+                                     dataset.toLowerCase().includes('indigenous'))
+                .reduce((sum, [, val]) => sum + val, 0);
+            const iplcPercentage = (iplcBenefit / totalBenefit * 100).toFixed(1);
+
+            html += `
+                <div class="col-3 p-3 text-center border-end">
+                    <div class="mb-2">
+                        <strong>${formatCurrency(totalBenefit)}</strong>
+                        <br><small class="text-muted">Total Benefits</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>${iplcPercentage}%</strong>
+                        <br><small class="text-muted">IPLC Share</small>
+                    </div>
+                    <div>
+                        <strong>${formatCurrency(iplcBenefit)}</strong>
+                        <br><small class="text-muted">IPLC Amount</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function createAttributionChart(weights, datasets) {
+        const ctx = document.getElementById('attributionChart').getContext('2d');
+        
+        if (attributionChart) {
+            attributionChart.destroy();
+        }
+
+        const methods = ['uniform', 'rule_based', 'citation_based', 'quantum'];
+        const methodLabels = ['Uniform', 'Rule-Based', 'Citation', 'Quantum'];
+        const colors = ['#95a5a6', '#3498db', '#e74c3c', '#667eea'];
+
+        const chartData = {
+            labels: datasets.map(d => d.replace(/_/g, ' ')),
+            datasets: methods.map((method, index) => ({
+                label: methodLabels[index],
+                data: datasets.map(dataset => weights[method][dataset] * 100),
+                backgroundColor: colors[index] + '80',
+                borderColor: colors[index],
+                borderWidth: 2
+            }))
+        };
+
+        attributionChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Attribution Weights by Method (%)'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Attribution Weight (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'DSI Datasets'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createIplcChart(iplcAnalysis) {
+        const ctx = document.getElementById('iplcChart').getContext('2d');
+        
+        if (iplcChart) {
+            iplcChart.destroy();
+        }
+
+        const methods = ['uniform', 'rule_based', 'citation_based', 'quantum'];
+        const methodLabels = ['Uniform', 'Rule-Based', 'Citation', 'Quantum'];
+        const colors = ['#95a5a6', '#3498db', '#e74c3c', '#667eea'];
+
+        const data = methods.map(method => iplcAnalysis[method].percentage);
+
+        iplcChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: methodLabels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors.map(c => c + '80'),
+                    borderColor: colors,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'IPLC Benefit Share by Method (%)'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    function displayBenefitAllocation(allocations, iplcAnalysis, scenario) {
+        const container = document.getElementById('benefitAllocation');
+        
+        let html = `
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <h6>Scenario: ${scenario.innovation_context.application}</h6>
+                    <p class="small text-muted">
+                        Total Revenue: ${formatCurrency(scenario.total_revenue)} | 
+                        Benefit Rate: 2.0% | 
+                        Total Benefits: ${formatCurrency(scenario.total_benefits)}
+                    </p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>IPLC %</th>
+                            <th>IPLC Amount</th>
+                            <th>vs Uniform</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        const methods = ['uniform', 'rule_based', 'citation_based', 'quantum'];
+        const methodLabels = ['Uniform', 'Rule-Based', 'Citation', 'Quantum'];
+        const uniformAmount = iplcAnalysis.uniform.benefit_amount;
+
+        methods.forEach((method, index) => {
+            const analysis = iplcAnalysis[method];
+            const difference = analysis.benefit_amount - uniformAmount;
+            const percentChange = ((difference / uniformAmount) * 100).toFixed(1);
+            const iconClass = difference > 0 ? 'fa-arrow-up text-success' : 
+                            difference < 0 ? 'fa-arrow-down text-danger' : 'fa-minus text-muted';
+
+            html += `
+                <tr>
+                    <td><strong>${methodLabels[index]}</strong></td>
+                    <td>${analysis.percentage.toFixed(1)}%</td>
+                    <td>${formatCurrency(analysis.benefit_amount)}</td>
+                    <td>
+                        <i class="fas ${iconClass} me-1"></i>
+                        ${percentChange > 0 ? '+' : ''}${percentChange}%
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function createDetailedTable(weights, allocations, scenario) {
+        const tbody = document.querySelector('#detailedTable tbody');
+        const methods = ['uniform', 'rule_based', 'citation_based', 'quantum'];
+        
+        let html = '';
+        scenario.datasets.forEach(dataset => {
+            const quantumWeight = weights.quantum[dataset];
+            const uniformWeight = weights.uniform[dataset];
+            const advantage = ((quantumWeight / uniformWeight - 1) * 100).toFixed(1);
+            const advantageClass = advantage > 0 ? 'text-success' : advantage < 0 ? 'text-danger' : 'text-muted';
+
+            html += `
+                <tr>
+                    <td><strong>${dataset.replace(/_/g, ' ')}</strong></td>
+                    <td>${formatPercentage(weights.uniform[dataset])}</td>
+                    <td>${formatPercentage(weights.rule_based[dataset])}</td>
+                    <td>${formatPercentage(weights.citation_based[dataset])}</td>
+                    <td>${formatPercentage(weights.quantum[dataset])}</td>
+                    <td class="${advantageClass}">
+                        ${advantage > 0 ? '+' : ''}${advantage}%
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function displayKeyInsights(weights, iplcAnalysis, scenario) {
+        const container = document.getElementById('keyInsights');
+        
+        const quantumIplc = iplcAnalysis.quantum.percentage;
+        const citationIplc = iplcAnalysis.citation_based.percentage;
+        const improvementVsCitation = ((quantumIplc / citationIplc - 1) * 100).toFixed(1);
+
+        const html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-trophy text-warning me-2"></i>Quantum Method Advantages</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>
+                            <strong>${quantumIplc.toFixed(1)}%</strong> IPLC benefit allocation vs 
+                            <strong>${citationIplc.toFixed(1)}%</strong> for citation method
+                        </li>
+                        <li><i class="fas fa-check text-success me-2"></i>
+                            <strong>+${improvementVsCitation}%</strong> improvement in Indigenous compensation
+                        </li>
+                        <li><i class="fas fa-check text-success me-2"></i>
+                            Context-aware weighting adapts to innovation type
+                        </li>
+                        <li><i class="fas fa-check text-success me-2"></i>
+                            Mathematically rigorous and scientifically defensible
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-exclamation-triangle text-danger me-2"></i>Classical Method Issues</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-times text-danger me-2"></i>
+                            Citation method severely undervalues traditional knowledge
+                        </li>
+                        <li><i class="fas fa-times text-danger me-2"></i>
+                            Rule-based systems reflect institutional bias
+                        </li>
+                        <li><i class="fas fa-times text-danger me-2"></i>
+                            Uniform distribution ignores actual contribution patterns
+                        </li>
+                        <li><i class="fas fa-times text-danger me-2"></i>
+                            Risk of biopiracy and unfair compensation
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="alert alert-info mt-3">
+                <h6><i class="fas fa-lightbulb me-2"></i>Recommendation</h6>
+                <p class="mb-0">
+                    The quantum-enhanced attribution method provides the most accurate and fair approach to DSI benefit allocation. 
+                    It ensures Indigenous communities receive appropriate compensation while providing legally defensible 
+                    calculations for industry compliance with CBD protocols.
+                </p>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Quantum-Enhanced DSI Governance Platform{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --quantum-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --blockchain-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .quantum-card {
+            background: var(--quantum-gradient);
+            color: white;
+        }
+
+        .blockchain-card {
+            background: var(--blockchain-gradient);
+            color: white;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .btn-quantum {
+            background: var(--quantum-gradient);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-quantum:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .btn-blockchain {
+            background: var(--blockchain-gradient);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-blockchain:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .badge {
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+        }
+
+        .sidebar {
+            background: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            padding-top: 80px;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            padding-top: 100px;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background-color: #f8f9fa;
+            border-left-color: var(--secondary-color);
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .sidebar-link.active {
+            background-color: #e9f3ff;
+            border-left-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                box-shadow: none;
+                padding-top: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding-top: 2rem;
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .method-header {
+            padding: 1rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .uniform-header { background: #95a5a6; color: white; }
+        .rules-header { background: #3498db; color: white; }
+        .citation-header { background: #e74c3c; color: white; }
+        .quantum-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-atom me-2"></i>
+                Quantum DSI Platform
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('comparative_dashboard') }}">
+                            <i class="fas fa-chart-line me-1"></i>Comparative Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('blockchain_interface') }}">
+                            <i class="fas fa-link me-1"></i>Blockchain Interface
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dsi_management') }}">
+                            <i class="fas fa-dna me-1"></i>DSI Management
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>System
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="checkHealth()">
+                                <i class="fas fa-heartbeat me-2"></i>Health Check
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showStats()">
+                                <i class="fas fa-chart-bar me-2"></i>Statistics
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="showHelp()">
+                                <i class="fas fa-question-circle me-2"></i>Help
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container-fluid" style="margin-top: 80px;">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Global utility functions
+        function showLoading(element) {
+            if (element) {
+                element.innerHTML = '<span class="loading-spinner"></span> Loading...';
+                element.disabled = true;
+            }
+        }
+
+        function hideLoading(element, originalText) {
+            if (element) {
+                element.innerHTML = originalText;
+                element.disabled = false;
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-info-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.main-content');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatPercentage(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'percent',
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }).format(value);
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/system/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    showAlert('System is healthy and operational', 'success');
+                } else {
+                    showAlert(`System health issue: ${data.error}`, 'warning');
+                }
+            } catch (error) {
+                showAlert('Failed to check system health', 'danger');
+            }
+        }
+
+        async function showStats() {
+            try {
+                const response = await fetch('/api/system/health');
+                const data = await response.json();
+                
+                if (data.statistics) {
+                    const stats = data.statistics;
+                    const message = `
+                        <strong>System Statistics:</strong><br>
+                        • Stakeholders: ${stats.total_stakeholders}<br>
+                        • Active Proposals: ${stats.active_proposals}<br>
+                        • DSI Assets: ${stats.total_dsi_assets}<br>
+                        • Consented Assets: ${stats.consented_assets}
+                    `;
+                    showAlert(message, 'info');
+                }
+            } catch (error) {
+                showAlert('Failed to load system statistics', 'danger');
+            }
+        }
+
+        function showHelp() {
+            const helpMessage = `
+                <strong>Quantum-Enhanced DSI Platform Help:</strong><br>
+                • <strong>Dashboard:</strong> System overview and statistics<br>
+                • <strong>Comparative Analysis:</strong> Compare Classical vs Quantum attribution<br>
+                • <strong>Blockchain Interface:</strong> Manage stakeholders and proposals<br>
+                • <strong>DSI Management:</strong> Register and manage DSI assets<br><br>
+                For technical support, consult the documentation or contact the system administrator.
+            `;
+            showAlert(helpMessage, 'info');
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
