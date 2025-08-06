@@ -30,7 +30,7 @@ try:
     print("\n🔧 Initializing system components...")
     quantum_engine = QuantumAttributionEngine()
     governance = QuorumGovernance()
-    metadata_manager = DSIMetadataManager(database_path=":memory:")
+    metadata_manager = DSIMetadataManager(database_path="demo_dsi.db")
     print("✅ System components initialized")
     
     # Demo 1: Stakeholder Registration
@@ -84,6 +84,7 @@ try:
             'tissue_type': 'leaf'
         },
         'fair_metadata': {
+            'identifier': 'https://doi.org/10.5555/dsi-kayapo-001',
             'title': 'Medicinal Plant Genome from Kayapó Territory',
             'description': 'Complete genome sequence for traditional medicine research',
             'keywords': ['genomics', 'traditional knowledge', 'medicinal plants'],
@@ -91,7 +92,17 @@ try:
                 {'name': 'Dr. Maria Santos', 'affiliation': 'University of São Paulo'},
                 {'name': 'Kayapó Traditional Council', 'affiliation': 'Kayapó Territory'}
             ],
+            'access_url': 'https://dsi-platform.org/datasets/kayapo-001',
             'license': 'CC-BY-NC-SA',
+            'access_rights': 'restricted',
+            'format': 'application/x-fasta',
+            'standards': ['FAIR', 'CARE', 'Dublin Core'],
+            'vocabulary': ['EDAM', 'SO', 'GO'],
+            'provenance': {
+                'collection_method': 'field sampling',
+                'sequencing_platform': 'Illumina NovaSeq',
+                'assembly_method': 'SPAdes v3.15'
+            },
             'usage_notes': 'Restricted to non-commercial research with benefit sharing',
             'citation': 'Santos et al. Medicinal plant genome. DSI Platform. 2024.'
         },
@@ -174,13 +185,22 @@ try:
                         "Ethical benefit sharing")
     print(f"   ✅ Researcher: APPROVE")
     
-    governance.cast_vote("pharma_corp", proposal_id, VoteType.APPROVE,
-                        "Committed to fair practices")
-    print(f"   ✅ Industry Partner: APPROVE")
-    
-    governance.cast_vote("cali_admin", proposal_id, VoteType.APPROVE,
-                        "Aligns with Cali Fund objectives")
-    print(f"   ✅ Cali Fund Admin: APPROVE")
+    # Check if proposal is still active before continuing votes
+    current_status = governance.check_proposal_status(proposal_id)
+    if current_status['status'] == 'active':
+        governance.cast_vote("pharma_corp", proposal_id, VoteType.APPROVE,
+                            "Committed to fair practices")
+        print(f"   ✅ Industry Partner: APPROVE")
+        
+        current_status = governance.check_proposal_status(proposal_id)
+        if current_status['status'] == 'active':
+            governance.cast_vote("cali_admin", proposal_id, VoteType.APPROVE,
+                                "Aligns with Cali Fund objectives")
+            print(f"   ✅ Cali Fund Admin: APPROVE")
+        else:
+            print(f"   ℹ️  Proposal finalized after reaching quorum - remaining votes not needed")
+    else:
+        print(f"   ℹ️  Proposal finalized after reaching quorum - remaining votes not needed")
     
     # Check proposal status
     status = governance.check_proposal_status(proposal_id)

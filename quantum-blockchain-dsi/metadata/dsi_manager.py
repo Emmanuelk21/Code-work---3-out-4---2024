@@ -48,28 +48,30 @@ class IPLCConsent:
 @dataclass
 class FAIRMetadata:
     """FAIR-compliant metadata structure."""
-    # Findable
+    # Findable (required fields)
     identifier: str  # DOI or other persistent identifier
     title: str
     description: str
     keywords: List[str]
     creators: List[Dict[str, str]]
     
-    # Accessible
+    # Accessible (required fields)
     access_url: str
     license: str
     access_rights: str
-    download_url: Optional[str] = None
     
-    # Interoperable
+    # Interoperable (required fields)
     format: str  # MIME type
     standards: List[str]  # Metadata standards used
     vocabulary: List[str]  # Controlled vocabularies
     
-    # Reusable
+    # Reusable (required fields)
     provenance: Dict[str, Any]
     usage_notes: str
     citation: str
+    
+    # Optional fields (with defaults)
+    download_url: Optional[str] = None
     version: str = "1.0"
 
 

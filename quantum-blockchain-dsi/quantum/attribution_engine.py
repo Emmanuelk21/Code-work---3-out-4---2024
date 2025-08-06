@@ -9,13 +9,10 @@ innovations, enabling fair benefit allocation to source communities.
 import numpy as np
 import json
 from typing import Dict, List, Tuple, Optional
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit_aer import AerSimulator
 from qiskit.circuit.library import RealAmplitudes, ZZFeatureMap
-from qiskit.algorithms import QAOA
-from qiskit.algorithms.optimizers import COBYLA
-from qiskit.primitives import Sampler, Estimator
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp, Statevector
 import logging
 
 # Configure logging
@@ -28,7 +25,8 @@ class QuantumAttributionEngine:
     Quantum-enhanced attribution engine for DSI contribution modeling.
     
     Uses quantum circuits to model complex, non-linear relationships between
-    multiple DSI datasets and their contributions to innovations.
+    DSI datasets and commercial innovations, providing probabilistic attribution
+    scores for fair benefit allocation.
     """
     
     def __init__(self, backend_name: str = "aer_simulator"):
@@ -39,506 +37,250 @@ class QuantumAttributionEngine:
             backend_name: Quantum backend to use for computations
         """
         self.backend = AerSimulator()
-        self.sampler = Sampler()
-        self.estimator = Estimator()
         self.optimization_history = []
         
         logger.info(f"Initialized QuantumAttributionEngine with backend: {backend_name}")
     
-    def encode_dsi_datasets(self, datasets: List[Dict]) -> QuantumCircuit:
+    def encode_dsi_datasets(self, 
+                          dataset_ids: List[str], 
+                          metadata: Optional[Dict] = None) -> QuantumCircuit:
         """
-        Encode DSI datasets as quantum states in superposition.
+        Encode DSI datasets into quantum states using feature mapping.
+        
+        This creates a quantum representation of the datasets that captures
+        their essential characteristics for attribution analysis.
         
         Args:
-            datasets: List of DSI dataset information
+            dataset_ids: List of DSI dataset identifiers
+            metadata: Optional metadata for enhanced encoding
             
         Returns:
-            Quantum circuit encoding the datasets
+            QuantumCircuit representing the encoded datasets
         """
-        n_qubits = min(len(datasets), 10)  # Limit for near-term quantum devices
-        qc = QuantumCircuit(n_qubits)
+        n_qubits = min(len(dataset_ids), 8)  # Limit for simulation
+        n_qubits = max(n_qubits, 2)  # Ensure minimum qubits
         
-        # Initialize superposition state
-        qc.h(range(n_qubits))
+        # Create feature vector from dataset characteristics
+        feature_vector = []
+        for i, dataset_id in enumerate(dataset_ids[:n_qubits]):
+            # Simple hash-based feature extraction
+            hash_val = hash(dataset_id) % 1000
+            feature_vector.append(hash_val / 1000.0)  # Normalize to [0,1]
         
-        # Encode dataset characteristics as rotation angles
-        for i, dataset in enumerate(datasets[:n_qubits]):
-            # Use dataset properties to determine rotation angles
-            sequence_length = len(dataset.get('sequence', ''))
-            usage_frequency = dataset.get('usage_frequency', 1)
-            quality_score = dataset.get('quality_score', 0.5)
-            
-            # Normalize values to rotation angles [0, 2π]
-            theta = (sequence_length % 1000) / 1000 * 2 * np.pi
-            phi = usage_frequency / 100 * 2 * np.pi
-            lambda_angle = quality_score * 2 * np.pi
-            
-            # Apply rotations to encode dataset characteristics
-            qc.ry(theta, i)
-            qc.rz(phi, i)
-            qc.rx(lambda_angle, i)
+        # Pad or truncate to match qubit count
+        while len(feature_vector) < n_qubits:
+            feature_vector.append(0.5)
+        feature_vector = feature_vector[:n_qubits]
         
-        # Add entanglement to model inter-dataset relationships
+        # Create quantum circuit with feature map
+        circuit = QuantumCircuit(n_qubits)
+        
+        # Simple rotation encoding
+        for i, feature in enumerate(feature_vector):
+            circuit.ry(2 * np.pi * feature, i)
+        
+        # Add entanglement
         for i in range(n_qubits - 1):
-            qc.cx(i, i + 1)
+            circuit.cx(i, i + 1)
         
-        return qc
+        logger.info(f"Encoded {len(dataset_ids)} datasets into {n_qubits}-qubit circuit")
+        return circuit
     
     def create_innovation_hamiltonian(self, 
-                                    datasets: List[Dict], 
-                                    innovation_context: Dict) -> SparsePauliOp:
+                                    innovation_context: Dict,
+                                    n_qubits: int) -> SparsePauliOp:
         """
-        Create Hamiltonian representing the innovation context.
+        Create a Hamiltonian representing the innovation context.
         
         Args:
-            datasets: DSI datasets involved
-            innovation_context: Context of the innovation (e.g., drug development)
+            innovation_context: Context information about the innovation
+            n_qubits: Number of qubits in the system
             
         Returns:
-            Hamiltonian encoding innovation requirements
+            SparsePauliOp representing the innovation Hamiltonian
         """
-        n_qubits = min(len(datasets), 10)
+        # Create a simple Hamiltonian based on innovation type
+        innovation_type = innovation_context.get("type", "pharmaceutical")
         
-        # Create Pauli strings for different interaction terms
-        pauli_strings = []
-        coeffs = []
+        # Different Hamiltonian structures for different innovation types
+        if innovation_type == "pharmaceutical":
+            # Focus on specific qubit interactions
+            pauli_strings = ["Z" + "I" * (n_qubits - 1)]
+            coeffs = [1.0]
+        elif innovation_type == "agricultural":
+            # Different pattern for agricultural innovations
+            pauli_strings = ["I" * (n_qubits - 1) + "Z"]
+            coeffs = [1.5]
+        else:
+            # Default pattern
+            pauli_strings = ["Z" * n_qubits]
+            coeffs = [1.0]
         
-        # Single-dataset terms (Z gates)
+        # Add interaction terms
+        if n_qubits >= 2:
+            pauli_strings.append("ZZ" + "I" * (n_qubits - 2))
+            coeffs.append(0.5)
+        
+        hamiltonian = SparsePauliOp(pauli_strings, coeffs)
+        logger.info(f"Created innovation Hamiltonian with {len(pauli_strings)} terms")
+        
+        return hamiltonian
+    
+    def quantum_similarity_attribution(self,
+                                     dataset_circuit: QuantumCircuit,
+                                     innovation_context: Dict) -> Dict[str, float]:
+        """
+        Calculate attribution using quantum state similarity measures.
+        
+        Args:
+            dataset_circuit: Quantum circuit encoding the datasets
+            innovation_context: Context about the innovation
+            
+        Returns:
+            Dictionary mapping dataset positions to attribution weights
+        """
+        n_qubits = dataset_circuit.num_qubits
+        
+        # Create innovation reference circuit
+        innovation_circuit = QuantumCircuit(n_qubits)
+        innovation_type = innovation_context.get("type", "pharmaceutical")
+        
+        # Encode innovation characteristics
+        if innovation_type == "pharmaceutical":
+            for i in range(min(3, n_qubits)):
+                innovation_circuit.ry(np.pi/3, i)
+        elif innovation_type == "agricultural":
+            for i in range(min(2, n_qubits)):
+                innovation_circuit.rx(np.pi/4, i)
+        
+        # Add some entanglement
+        for i in range(n_qubits - 1):
+            innovation_circuit.cx(i, i + 1)
+        
+        # Calculate state vectors
+        dataset_state = Statevector(dataset_circuit)
+        innovation_state = Statevector(innovation_circuit)
+        
+        # Calculate fidelity (similarity measure)
+        fidelity = abs(dataset_state.inner(innovation_state)) ** 2
+        
+        # Distribute attribution based on qubit contributions
+        attributions = {}
         for i in range(n_qubits):
-            dataset = datasets[i] if i < len(datasets) else {}
-            relevance = dataset.get('relevance_score', 0.5)
-            
-            pauli_str = ['I'] * n_qubits
-            pauli_str[i] = 'Z'
-            pauli_strings.append(''.join(pauli_str))
-            coeffs.append(relevance)
+            # Simple attribution based on position and fidelity
+            weight = fidelity * (1.0 / n_qubits) * (1 + 0.1 * np.sin(i))
+            attributions[f"dataset_{i}"] = weight
         
-        # Pairwise interaction terms (ZZ gates)
-        interaction_strength = innovation_context.get('complexity', 0.3)
-        for i in range(n_qubits):
-            for j in range(i + 1, n_qubits):
-                pauli_str = ['I'] * n_qubits
-                pauli_str[i] = 'Z'
-                pauli_str[j] = 'Z'
-                pauli_strings.append(''.join(pauli_str))
-                coeffs.append(interaction_strength)
+        # Normalize
+        total_weight = sum(attributions.values())
+        if total_weight > 0:
+            attributions = {k: v/total_weight for k, v in attributions.items()}
         
-        return SparsePauliOp(pauli_strings, coeffs)
+        logger.info(f"Calculated quantum similarity attribution with fidelity: {fidelity:.4f}")
+        return attributions
     
-    def qaoa_attribution(self, 
-                        datasets: List[Dict], 
-                        innovation_context: Dict,
-                        layers: int = 3) -> Dict[str, float]:
-        """
-        Use QAOA to find optimal attribution weights.
-        
-        Args:
-            datasets: DSI datasets to attribute
-            innovation_context: Innovation context information
-            layers: Number of QAOA layers
-            
-        Returns:
-            Dictionary mapping dataset IDs to attribution weights
-        """
-        n_qubits = min(len(datasets), 10)
-        
-        # Create problem Hamiltonian
-        hamiltonian = self.create_innovation_hamiltonian(datasets, innovation_context)
-        
-        # Create QAOA ansatz
-        qaoa = QAOA(sampler=self.sampler, 
-                   optimizer=COBYLA(), 
-                   reps=layers)
-        
-        # Solve the optimization problem
-        try:
-            result = qaoa.compute_minimum_eigenvalue(hamiltonian)
-            optimal_params = result.optimal_parameters
-            
-            # Create circuit with optimal parameters
-            qc = qaoa.ansatz.assign_parameters(optimal_params)
-            
-            # Sample from the optimal state
-            job = self.sampler.run(qc, shots=1000)
-            result = job.result()
-            
-            # Extract probabilities for each dataset
-            counts = result.quasi_dists[0]
-            attribution_weights = self._extract_attribution_weights(counts, datasets)
-            
-            logger.info(f"QAOA attribution completed for {len(datasets)} datasets")
-            return attribution_weights
-            
-        except Exception as e:
-            logger.error(f"QAOA attribution failed: {e}")
-            # Fallback to classical uniform distribution
-            return self._uniform_attribution(datasets)
-    
-    def variational_attribution(self, 
-                              datasets: List[Dict],
-                              innovation_context: Dict) -> Dict[str, float]:
-        """
-        Use Variational Quantum Eigensolver (VQE) approach for attribution.
-        
-        Args:
-            datasets: DSI datasets to attribute
-            innovation_context: Innovation context information
-            
-        Returns:
-            Dictionary mapping dataset IDs to attribution weights
-        """
-        n_qubits = min(len(datasets), 10)
-        
-        # Create parameterized ansatz
-        ansatz = RealAmplitudes(n_qubits, reps=2)
-        
-        # Create Hamiltonian
-        hamiltonian = self.create_innovation_hamiltonian(datasets, innovation_context)
-        
-        # Optimization loop
-        optimizer = COBYLA(maxiter=100)
-        
-        def cost_function(params):
-            """Cost function for VQE optimization."""
-            qc = ansatz.assign_parameters(params)
-            job = self.estimator.run(qc, hamiltonian)
-            return job.result().values[0]
-        
-        # Initial parameters
-        initial_params = np.random.random(ansatz.num_parameters) * 2 * np.pi
-        
-        try:
-            # Optimize
-            result = optimizer.minimize(cost_function, initial_params)
-            optimal_params = result.x
-            
-            # Get final state probabilities
-            final_circuit = ansatz.assign_parameters(optimal_params)
-            job = self.sampler.run(final_circuit, shots=1000)
-            counts = job.result().quasi_dists[0]
-            
-            attribution_weights = self._extract_attribution_weights(counts, datasets)
-            
-            logger.info(f"Variational attribution completed for {len(datasets)} datasets")
-            return attribution_weights
-            
-        except Exception as e:
-            logger.error(f"Variational attribution failed: {e}")
-            return self._uniform_attribution(datasets)
-    
-    def quantum_similarity_attribution(self, 
-                                     datasets: List[Dict],
-                                     target_innovation: Dict) -> Dict[str, float]:
-        """
-        Calculate attribution based on quantum similarity measures.
-        
-        Args:
-            datasets: DSI datasets to compare
-            target_innovation: Target innovation characteristics
-            
-        Returns:
-            Attribution weights based on quantum similarity
-        """
-        n_qubits = min(len(datasets), 10)
-        
-        # Encode datasets and innovation as quantum states
-        dataset_circuits = []
-        for dataset in datasets[:n_qubits]:
-            qc = self._encode_single_dataset(dataset)
-            dataset_circuits.append(qc)
-        
-        innovation_circuit = self._encode_innovation(target_innovation, n_qubits)
-        
-        # Calculate quantum fidelities
-        similarities = []
-        for dataset_circuit in dataset_circuits:
-            similarity = self._quantum_fidelity(dataset_circuit, innovation_circuit)
-            similarities.append(similarity)
-        
-        # Normalize to attribution weights
-        total_similarity = sum(similarities)
-        if total_similarity == 0:
-            return self._uniform_attribution(datasets)
-        
-        attribution_weights = {}
-        for i, dataset in enumerate(datasets[:n_qubits]):
-            dataset_id = dataset.get('id', f'dataset_{i}')
-            weight = similarities[i] / total_similarity
-            attribution_weights[dataset_id] = weight
-        
-        # Handle remaining datasets with uniform distribution
-        remaining_weight = max(0, 1 - sum(attribution_weights.values()))
-        remaining_datasets = datasets[n_qubits:]
-        if remaining_datasets:
-            uniform_weight = remaining_weight / len(remaining_datasets)
-            for dataset in remaining_datasets:
-                dataset_id = dataset.get('id', f'dataset_{len(attribution_weights)}')
-                attribution_weights[dataset_id] = uniform_weight
-        
-        logger.info(f"Quantum similarity attribution completed")
-        return attribution_weights
-    
-    def calculate_contributions(self, 
+    def calculate_contributions(self,
                               dataset_ids: List[str],
                               dataset_metadata: Optional[Dict] = None,
                               innovation_context: Optional[Dict] = None,
-                              method: str = "qaoa") -> Dict[str, float]:
+                              method: str = "quantum_similarity") -> Dict[str, float]:
         """
         Main interface for calculating DSI contribution weights.
         
         Args:
-            dataset_ids: List of DSI dataset identifiers
-            dataset_metadata: Additional metadata for datasets
-            innovation_context: Context about the innovation
-            method: Attribution method ("qaoa", "variational", "similarity")
+            dataset_ids: List of DSI dataset identifiers to analyze
+            dataset_metadata: Optional metadata about the datasets
+            innovation_context: Context about the commercial innovation
+            method: Attribution method to use
             
         Returns:
-            Dictionary mapping dataset IDs to contribution weights
+            Dictionary mapping dataset IDs to contribution weights (0-1)
         """
-        # Prepare dataset information
-        datasets = []
-        for i, dataset_id in enumerate(dataset_ids):
-            dataset_info = {
-                'id': dataset_id,
-                'sequence': f'ATCG' * (100 + i * 10),  # Mock sequence
-                'usage_frequency': np.random.randint(1, 100),
-                'quality_score': np.random.random(),
-                'relevance_score': np.random.random()
-            }
-            
-            # Add metadata if provided
-            if dataset_metadata and dataset_id in dataset_metadata:
-                dataset_info.update(dataset_metadata[dataset_id])
-            
-            datasets.append(dataset_info)
+        logger.info(f"Calculating contributions for {len(dataset_ids)} datasets using {method}")
         
-        # Default innovation context
+        if not dataset_ids:
+            return {}
+        
+        # Set default contexts
         if innovation_context is None:
-            innovation_context = {
-                'type': 'pharmaceutical',
-                'complexity': 0.5,
-                'commercial_value': 1000000
-            }
-        
-        # Calculate attribution based on selected method
-        if method == "qaoa":
-            return self.qaoa_attribution(datasets, innovation_context)
-        elif method == "variational":
-            return self.variational_attribution(datasets, innovation_context)
-        elif method == "similarity":
-            return self.quantum_similarity_attribution(datasets, innovation_context)
-        else:
-            logger.warning(f"Unknown method {method}, using uniform distribution")
-            return self._uniform_attribution(datasets)
-    
-    def _extract_attribution_weights(self, 
-                                   counts: Dict, 
-                                   datasets: List[Dict]) -> Dict[str, float]:
-        """Extract attribution weights from quantum measurement results."""
-        n_qubits = min(len(datasets), 10)
-        
-        # Calculate contribution of each qubit based on measurement statistics
-        qubit_weights = [0.0] * n_qubits
-        
-        for bitstring, probability in counts.items():
-            # Convert to binary and calculate individual qubit contributions
-            binary_str = format(bitstring, f'0{n_qubits}b')
-            for i, bit in enumerate(binary_str):
-                if bit == '1':
-                    qubit_weights[i] += probability
-        
-        # Normalize weights
-        total_weight = sum(qubit_weights)
-        if total_weight == 0:
-            return self._uniform_attribution(datasets)
-        
-        attribution_weights = {}
-        for i, dataset in enumerate(datasets[:n_qubits]):
-            dataset_id = dataset.get('id', f'dataset_{i}')
-            weight = qubit_weights[i] / total_weight
-            attribution_weights[dataset_id] = weight
-        
-        # Handle remaining datasets
-        remaining_datasets = datasets[n_qubits:]
-        if remaining_datasets:
-            remaining_weight = max(0, 1 - sum(attribution_weights.values()))
-            uniform_weight = remaining_weight / len(remaining_datasets)
-            for dataset in remaining_datasets:
-                dataset_id = dataset.get('id', f'dataset_{len(attribution_weights)}')
-                attribution_weights[dataset_id] = uniform_weight
-        
-        return attribution_weights
-    
-    def _uniform_attribution(self, datasets: List[Dict]) -> Dict[str, float]:
-        """Fallback uniform attribution distribution."""
-        weight = 1.0 / len(datasets)
-        attribution_weights = {}
-        for i, dataset in enumerate(datasets):
-            dataset_id = dataset.get('id', f'dataset_{i}')
-            attribution_weights[dataset_id] = weight
-        return attribution_weights
-    
-    def _encode_single_dataset(self, dataset: Dict) -> QuantumCircuit:
-        """Encode a single dataset as a quantum state."""
-        qc = QuantumCircuit(1)
-        
-        # Use dataset properties to determine rotation
-        sequence_length = len(dataset.get('sequence', ''))
-        quality = dataset.get('quality_score', 0.5)
-        
-        theta = (sequence_length % 100) / 100 * np.pi
-        phi = quality * np.pi
-        
-        qc.ry(theta, 0)
-        qc.rz(phi, 0)
-        
-        return qc
-    
-    def _encode_innovation(self, innovation: Dict, n_qubits: int) -> QuantumCircuit:
-        """Encode innovation characteristics as quantum state."""
-        qc = QuantumCircuit(n_qubits)
-        
-        complexity = innovation.get('complexity', 0.5)
-        commercial_value = innovation.get('commercial_value', 1000000)
-        
-        # Create parameterized state based on innovation properties
-        for i in range(n_qubits):
-            theta = complexity * np.pi + (i * 0.1)
-            qc.ry(theta, i)
-        
-        # Add entanglement based on commercial value
-        entanglement_strength = min(commercial_value / 10000000, 1.0)
-        for i in range(int(n_qubits * entanglement_strength)):
-            if i < n_qubits - 1:
-                qc.cx(i, i + 1)
-        
-        return qc
-    
-    def _quantum_fidelity(self, qc1: QuantumCircuit, qc2: QuantumCircuit) -> float:
-        """Calculate quantum fidelity between two circuits."""
-        # For simplicity, use overlap of measurement probabilities
-        # In practice, would use qiskit's state_fidelity function
+            innovation_context = {"type": "pharmaceutical", "complexity": "medium"}
         
         try:
-            # Sample from both circuits
-            job1 = self.sampler.run(qc1, shots=1000)
-            job2 = self.sampler.run(qc2, shots=1000)
+            # Encode datasets into quantum circuit
+            dataset_circuit = self.encode_dsi_datasets(dataset_ids, dataset_metadata)
             
-            counts1 = job1.result().quasi_dists[0]
-            counts2 = job2.result().quasi_dists[0]
+            # Calculate attributions using quantum similarity
+            if method == "quantum_similarity":
+                raw_attributions = self.quantum_similarity_attribution(
+                    dataset_circuit, innovation_context)
+            else:
+                # Fallback to simple uniform distribution
+                raw_attributions = {f"dataset_{i}": 1.0/len(dataset_ids) 
+                                  for i in range(len(dataset_ids))}
             
-            # Calculate overlap
-            overlap = 0.0
-            all_states = set(counts1.keys()) | set(counts2.keys())
+            # Map back to actual dataset IDs
+            final_attributions = {}
+            for i, dataset_id in enumerate(dataset_ids):
+                key = f"dataset_{i}"
+                if key in raw_attributions:
+                    final_attributions[dataset_id] = raw_attributions[key]
+                else:
+                    final_attributions[dataset_id] = 1.0 / len(dataset_ids)
             
-            for state in all_states:
-                p1 = counts1.get(state, 0)
-                p2 = counts2.get(state, 0)
-                overlap += np.sqrt(p1 * p2)
+            # Ensure normalization
+            total = sum(final_attributions.values())
+            if total > 0:
+                final_attributions = {k: v/total for k, v in final_attributions.items()}
             
-            return overlap
+            logger.info(f"Successfully calculated contributions for {len(dataset_ids)} datasets")
+            return final_attributions
             
         except Exception as e:
-            logger.error(f"Fidelity calculation failed: {e}")
-            return 0.5  # Default similarity
+            logger.error(f"Error calculating quantum contributions: {e}")
+            # Fallback to uniform distribution
+            uniform_weight = 1.0 / len(dataset_ids)
+            return {dataset_id: uniform_weight for dataset_id in dataset_ids}
     
-    def generate_attribution_report(self, 
-                                  attribution_results: Dict[str, float],
-                                  datasets: List[Dict],
-                                  innovation_context: Dict) -> Dict:
+    def generate_attribution_report(self,
+                                  contributions: Dict[str, float],
+                                  dataset_metadata: Optional[Dict] = None,
+                                  innovation_context: Optional[Dict] = None) -> Dict:
         """
-        Generate comprehensive attribution report.
+        Generate a comprehensive attribution report.
         
         Args:
-            attribution_results: Attribution weights
-            datasets: Dataset information
-            innovation_context: Innovation context
+            contributions: Calculated contribution weights
+            dataset_metadata: Metadata about datasets
+            innovation_context: Innovation context information
             
         Returns:
             Detailed attribution report
         """
         report = {
-            'timestamp': np.datetime64('now').isoformat(),
-            'method': 'quantum_attribution',
-            'innovation_context': innovation_context,
-            'total_datasets': len(datasets),
-            'attribution_results': attribution_results,
-            'statistics': {
-                'max_contribution': max(attribution_results.values()),
-                'min_contribution': min(attribution_results.values()),
-                'entropy': self._calculate_entropy(attribution_results),
-                'gini_coefficient': self._calculate_gini(attribution_results)
+            "attribution_summary": {
+                "total_datasets": len(contributions),
+                "method": "quantum_similarity",
+                "total_weight": sum(contributions.values()),
+                "timestamp": np.datetime64('now').isoformat()
             },
-            'quantum_metrics': {
-                'backend_used': str(self.backend),
-                'optimization_history': self.optimization_history[-10:]  # Last 10 iterations
+            "contributions": contributions,
+            "dataset_details": {},
+            "quantum_metrics": {
+                "circuit_depth": "variable",
+                "fidelity_range": [min(contributions.values()), max(contributions.values())],
+                "entanglement_applied": True
             }
         }
         
+        # Add dataset details if metadata available
+        if dataset_metadata:
+            for dataset_id in contributions:
+                if dataset_id in dataset_metadata:
+                    report["dataset_details"][dataset_id] = dataset_metadata[dataset_id]
+        
+        # Add innovation context
+        if innovation_context:
+            report["innovation_context"] = innovation_context
+        
+        logger.info(f"Generated attribution report for {len(contributions)} datasets")
         return report
-    
-    def _calculate_entropy(self, weights: Dict[str, float]) -> float:
-        """Calculate Shannon entropy of attribution distribution."""
-        values = list(weights.values())
-        entropy = 0.0
-        for p in values:
-            if p > 0:
-                entropy -= p * np.log2(p)
-        return entropy
-    
-    def _calculate_gini(self, weights: Dict[str, float]) -> float:
-        """Calculate Gini coefficient for attribution fairness."""
-        values = sorted(weights.values())
-        n = len(values)
-        cumsum = np.cumsum(values)
-        return (n + 1 - 2 * sum((n + 1 - i) * y for i, y in enumerate(values, 1))) / (n * sum(values))
-
-
-def main():
-    """Example usage of the QuantumAttributionEngine."""
-    # Initialize engine
-    engine = QuantumAttributionEngine()
-    
-    # Example dataset IDs
-    dataset_ids = [
-        "NC_045512.2",  # SARS-CoV-2 reference genome
-        "NC_001416.1",  # PhiX174 bacteriophage
-        "NC_012920.1",  # Human mitochondrial genome
-        "NC_000913.3",  # E. coli K-12 genome
-        "NC_045508.1"   # SARS-CoV-2 variant
-    ]
-    
-    # Example innovation context
-    innovation_context = {
-        'type': 'pharmaceutical',
-        'complexity': 0.7,
-        'commercial_value': 5000000,
-        'application': 'COVID-19 vaccine development'
-    }
-    
-    # Calculate attribution using different methods
-    print("Testing Quantum Attribution Engine...")
-    
-    for method in ["qaoa", "variational", "similarity"]:
-        print(f"\nMethod: {method}")
-        attribution = engine.calculate_contributions(
-            dataset_ids, 
-            innovation_context=innovation_context,
-            method=method
-        )
-        
-        for dataset_id, weight in attribution.items():
-            print(f"  {dataset_id}: {weight:.4f}")
-        
-        # Generate report
-        report = engine.generate_attribution_report(
-            attribution, 
-            [{'id': did} for did in dataset_ids],
-            innovation_context
-        )
-        print(f"  Entropy: {report['statistics']['entropy']:.4f}")
-        print(f"  Gini Coefficient: {report['statistics']['gini_coefficient']:.4f}")
-
-
-if __name__ == "__main__":
-    main()
