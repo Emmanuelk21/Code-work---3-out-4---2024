@@ -1,0 +1,47 @@
+[
+  {
+    "pdb_id": "8RUC",
+    "title": "ACTIVATED SPINACH RUBISCO COMPLEXED WITH 2-CARBOXYARABINITOL BISPHOSPHATE",
+    "resolution": 0.0,
+    "method": "X-RAY DIFFRACTION",
+    "organism": "Unknown",
+    "num_chains": 0,
+    "sequence_length": ""
+  },
+  {
+    "pdb_id": "1RCX",
+    "title": "NON-ACTIVATED SPINACH RUBISCO IN COMPLEX WITH ITS SUBSTRATE RIBULOSE-1,5-BISPHOSPHATE",
+    "resolution": 0.0,
+    "method": "X-RAY DIFFRACTION",
+    "organism": "Unknown",
+    "num_chains": 0,
+    "sequence_length": ""
+  },
+  {
+    "pdb_id": "1BXN",
+    "title": "THE CRYSTAL STRUCTURE OF RUBISCO FROM ALCALIGENES EUTROPHUS TO 2.7 ANGSTROMS.",
+    "resolution": 0.0,
+    "method": "X-RAY DIFFRACTION",
+    "organism": "Unknown",
+    "num_chains": 0,
+    "sequence_length": ""
+  },
+  {
+    "pdb_id": "1RBL",
+    "title": "STRUCTURE DETERMINATION AND REFINEMENT OF RIBULOSE 1,5 BISPHOSPHATE CARBOXYLASE(SLASH)OXYGENASE FROM SYNECHOCOCCUS PCC6301",
+    "resolution": 0.0,
+    "method": "X-RAY DIFFRACTION",
+    "organism": "Unknown",
+    "num_chains": 0,
+    "sequence_length": ""
+  },
+  {
+    "pdb_id": "1RBO",
+    "title": "SPINACH RUBISCO IN COMPLEX WITH THE INHIBITOR 2-CARBOXYARABINITOL-1,5-DIPHOSPHATE",
+    "resolution": 0.0,
+    "method": "X-RAY DIFFRACTION",
+    "organism": "Unknown",
+    "num_chains": 0,
+    "sequence_length": ""
+  }
+]

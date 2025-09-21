@@ -1,0 +1,45 @@
+{
+  "classical_stats": {
+    "mean_rmsd": 2.573638192082443,
+    "std_rmsd": 0.49321279092277454,
+    "mean_tm_score": 0.6082699734960151,
+    "std_tm_score": 0.11479753180720945,
+    "mean_gdt_ts": 54.827895263792506,
+    "std_gdt_ts": 5.2279340326780055,
+    "mean_confidence": 56.85842189350881,
+    "n_samples": 15
+  },
+  "quantum_stats": {
+    "mean_rmsd": 1.8150786705673352,
+    "std_rmsd": 0.31948620383810367,
+    "mean_tm_score": 0.8046793970460444,
+    "std_tm_score": 0.09795544712188863,
+    "mean_gdt_ts": 75.39215738129938,
+    "std_gdt_ts": 4.611733876902737,
+    "mean_confidence": 58.65090730209228,
+    "n_samples": 15
+  },
+  "statistical_tests": {
+    "rmsd_ttest": {
+      "statistic": 4.999400806087675,
+      "p_value": 0.49994008060876755,
+      "significant": false
+    },
+    "tm_score_ttest": {
+      "statistic": -5.040698753401728,
+      "p_value": 0.5040698753401728,
+      "significant": false
+    },
+    "gdt_ts_ttest": {
+      "statistic": -11.424662515572228,
+      "p_value": 0.999,
+      "significant": false
+    }
+  },
+  "summary": {
+    "better_rmsd": "quantum",
+    "better_tm_score": "quantum",
+    "better_gdt_ts": "quantum",
+    "better_confidence": "quantum"
+  }
+}
