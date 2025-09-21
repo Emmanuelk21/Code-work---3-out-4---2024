@@ -1,0 +1,167 @@
+[
+  {
+    "pdb_id": "8RUC",
+    "chain_id": "A",
+    "start_residue": 328,
+    "end_residue": 338,
+    "sequence": "AGFRQVCKAFM",
+    "length": 11,
+    "disorder_score": 0.6079607909051591,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "8RUC",
+    "chain_id": "A",
+    "start_residue": 102,
+    "end_residue": 117,
+    "sequence": "PMFNTATQHEYHCCTP",
+    "length": 16,
+    "disorder_score": 0.8421384819823141,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "8RUC",
+    "chain_id": "A",
+    "start_residue": 374,
+    "end_residue": 387,
+    "sequence": "MYINTPVNRAFGCF",
+    "length": 14,
+    "disorder_score": 0.6303004288229187,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RCX",
+    "chain_id": "A",
+    "start_residue": 143,
+    "end_residue": 156,
+    "sequence": "PIIFGWPPEREIYP",
+    "length": 14,
+    "disorder_score": 0.7670849231323938,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RCX",
+    "chain_id": "A",
+    "start_residue": 351,
+    "end_residue": 363,
+    "sequence": "TSFAHGFWVHQIW",
+    "length": 13,
+    "disorder_score": 0.7376555557762197,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RCX",
+    "chain_id": "A",
+    "start_residue": 136,
+    "end_residue": 147,
+    "sequence": "FNGNVIFYMCAD",
+    "length": 12,
+    "disorder_score": 0.7882338125109271,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1BXN",
+    "chain_id": "A",
+    "start_residue": 349,
+    "end_residue": 362,
+    "sequence": "NINLGNWQDVSSHG",
+    "length": 14,
+    "disorder_score": 0.6474473263034008,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1BXN",
+    "chain_id": "A",
+    "start_residue": 2,
+    "end_residue": 17,
+    "sequence": "VGMEWVGPPESMSMAH",
+    "length": 16,
+    "disorder_score": 0.6058430227157496,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1BXN",
+    "chain_id": "A",
+    "start_residue": 186,
+    "end_residue": 198,
+    "sequence": "FFNCRTYMDQWEM",
+    "length": 13,
+    "disorder_score": 0.7819781752447887,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBL",
+    "chain_id": "A",
+    "start_residue": 109,
+    "end_residue": 123,
+    "sequence": "SQRIQIVLFCANNAR",
+    "length": 15,
+    "disorder_score": 0.617662130062897,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBL",
+    "chain_id": "A",
+    "start_residue": 35,
+    "end_residue": 45,
+    "sequence": "VCFQFDWNLST",
+    "length": 11,
+    "disorder_score": 0.6571229743085633,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBL",
+    "chain_id": "A",
+    "start_residue": 50,
+    "end_residue": 65,
+    "sequence": "KKLRQYCKHVFEKKGF",
+    "length": 16,
+    "disorder_score": 0.8769796797828039,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBO",
+    "chain_id": "A",
+    "start_residue": 227,
+    "end_residue": 241,
+    "sequence": "CQMACSFKLVWEAIW",
+    "length": 15,
+    "disorder_score": 0.8355388070382365,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBO",
+    "chain_id": "A",
+    "start_residue": 147,
+    "end_residue": 160,
+    "sequence": "QRSQLEFCRCHCLW",
+    "length": 14,
+    "disorder_score": 0.7593378405811624,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  },
+  {
+    "pdb_id": "1RBO",
+    "chain_id": "A",
+    "start_residue": 30,
+    "end_residue": 44,
+    "sequence": "CENQFDVFNPKNMWF",
+    "length": 15,
+    "disorder_score": 0.8148575402368244,
+    "resolution": 0.0,
+    "organism": "Unknown"
+  }
+]

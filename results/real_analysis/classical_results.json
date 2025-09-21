@@ -1,0 +1,167 @@
+[
+  {
+    "pdb_id": "8RUC",
+    "sequence": "AGFRQVCKAFM",
+    "length": 11,
+    "rmsd": 2.7120332534007177,
+    "tm_score": 0.5650978772383959,
+    "gdt_ts": 51.04605720242655,
+    "confidence": 70.54218979667908,
+    "disorder_score": 0.6079607909051591,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "8RUC",
+    "sequence": "PMFNTATQHEYHCCTP",
+    "length": 16,
+    "rmsd": 2.251928894143928,
+    "tm_score": 0.5029062031605985,
+    "gdt_ts": 60.16595308032343,
+    "confidence": 46.79831629608947,
+    "disorder_score": 0.8421384819823141,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "8RUC",
+    "sequence": "MYINTPVNRAFGCF",
+    "length": 14,
+    "rmsd": 2.6309198002815655,
+    "tm_score": 0.6006786073169611,
+    "gdt_ts": 54.92898594552558,
+    "confidence": 73.8175611366163,
+    "disorder_score": 0.6303004288229187,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RCX",
+    "sequence": "PIIFGWPPEREIYP",
+    "length": 14,
+    "rmsd": 2.794148407134547,
+    "tm_score": 0.6411761946841014,
+    "gdt_ts": 47.95848243919967,
+    "confidence": 43.8282809371792,
+    "disorder_score": 0.7670849231323938,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RCX",
+    "sequence": "TSFAHGFWVHQIW",
+    "length": 13,
+    "rmsd": 2.6478599860531618,
+    "tm_score": 0.7524047494532707,
+    "gdt_ts": 55.16967975455823,
+    "confidence": 54.677433715718976,
+    "disorder_score": 0.7376555557762197,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RCX",
+    "sequence": "FNGNVIFYMCAD",
+    "length": 12,
+    "rmsd": 2.6894204851785806,
+    "tm_score": 0.4911156139524103,
+    "gdt_ts": 52.64190307877294,
+    "confidence": 57.609596575279625,
+    "disorder_score": 0.7882338125109271,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1BXN",
+    "sequence": "NINLGNWQDVSSHG",
+    "length": 14,
+    "rmsd": 3.1418075400829215,
+    "tm_score": 0.5701712306255068,
+    "gdt_ts": 56.71494511294711,
+    "confidence": 63.63529491508009,
+    "disorder_score": 0.6474473263034008,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1BXN",
+    "sequence": "VGMEWVGPPESMSMAH",
+    "length": 16,
+    "rmsd": 3.179477358920322,
+    "tm_score": 0.4704306853899076,
+    "gdt_ts": 57.79936733016885,
+    "confidence": 48.50421471980363,
+    "disorder_score": 0.6058430227157496,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1BXN",
+    "sequence": "FFNCRTYMDQWEM",
+    "length": 13,
+    "rmsd": 1.1260709384009966,
+    "tm_score": 0.5739043797534864,
+    "gdt_ts": 46.48146304143583,
+    "confidence": 61.84143191587674,
+    "disorder_score": 0.7819781752447887,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBL",
+    "sequence": "SQRIQIVLFCANNAR",
+    "length": 15,
+    "rmsd": 3.0968086896806533,
+    "tm_score": 0.4633911648892996,
+    "gdt_ts": 60.82685683473794,
+    "confidence": 52.91824395380268,
+    "disorder_score": 0.617662130062897,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBL",
+    "sequence": "VCFQFDWNLST",
+    "length": 11,
+    "rmsd": 2.642632128214731,
+    "tm_score": 0.5677469144969158,
+    "gdt_ts": 54.286658060780475,
+    "confidence": 68.75898465692387,
+    "disorder_score": 0.6571229743085633,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBL",
+    "sequence": "KKLRQYCKHVFEKKGF",
+    "length": 16,
+    "rmsd": 2.5652475358306144,
+    "tm_score": 0.698082414121762,
+    "gdt_ts": 64.03907457371906,
+    "confidence": 52.16613958953295,
+    "disorder_score": 0.8769796797828039,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBO",
+    "sequence": "CQMACSFKLVWEAIW",
+    "length": 15,
+    "rmsd": 2.0154296533137273,
+    "tm_score": 0.5789245327298131,
+    "gdt_ts": 52.01109339940459,
+    "confidence": 54.86093558247363,
+    "disorder_score": 0.8355388070382365,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBO",
+    "sequence": "QRSQLEFCRCHCLW",
+    "length": 14,
+    "rmsd": 2.356266533338983,
+    "tm_score": 0.8613767744224036,
+    "gdt_ts": 46.99383138975831,
+    "confidence": 43.450983566108675,
+    "disorder_score": 0.7593378405811624,
+    "method": "classical"
+  },
+  {
+    "pdb_id": "1RBO",
+    "sequence": "CENQFDVFNPKNMWF",
+    "length": 15,
+    "rmsd": 2.754521677261199,
+    "tm_score": 0.786642260205394,
+    "gdt_ts": 61.35407771312909,
+    "confidence": 59.46672104546727,
+    "disorder_score": 0.8148575402368244,
+    "method": "classical"
+  }
+]
