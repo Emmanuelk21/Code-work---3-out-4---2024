@@ -1,0 +1,64 @@
+name: Quantum vs Classical ML Analysis
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy pandas matplotlib seaborn requests biopython qiskit scipy
+    
+    - name: Run analysis
+      run: |
+        python run_analysis.py
+    
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      with:
+        name: analysis-results
+        path: results/
+    
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            const summaryPath = 'results/visualizations/summary_dashboard.txt';
+            if (fs.existsSync(summaryPath)) {
+              const summary = fs.readFileSync(summaryPath, 'utf8');
+              const truncated = summary.length > 2000 ? summary.substring(0, 2000) + '...' : summary;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔬 Analysis Results
+
+\`\`\`
+${truncated}
+\`\`\``
+              });
+            }
+          } catch (error) {
+            console.log('Could not read results file:', error);
+          }
