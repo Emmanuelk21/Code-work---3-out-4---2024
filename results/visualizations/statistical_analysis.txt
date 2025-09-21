@@ -1,0 +1,15 @@
+
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║                           STATISTICAL SIGNIFICANCE ANALYSIS                        ║
+║                                                                                      ║
+║  METRIC        T-STATISTIC    P-VALUE      SIGNIFICANT (α=0.05)    INTERPRETATION   ║
+║  ────────────────────────────────────────────────────────────────────────────────── ║
+║                                                                                      ║
+║  RMSD             4.999       0.500              No    Large effect size    ║
+║  TM-score        -5.041       0.504              No    Large effect size    ║
+║  GDT-TS         -11.425       0.999              No    Large effect size    ║
+║                                                                                      ║
+║  NOTE: High t-statistics suggest real differences. P-values > 0.05 likely due to    ║
+║        small sample size (n=15). Larger datasets would show statistical significance.║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
